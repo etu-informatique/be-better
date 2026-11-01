@@ -1,10 +1,10 @@
-import { CARD_BY_ID } from '../data/cards.js'
+import { getCard } from '../data/content.js'
 import { relativeDay } from '../lib/dates.js'
 import { INTERVALS, strength } from '../lib/srs.js'
 import CardRow from '../components/CardRow.jsx'
 
 export default function ReviewTab({ progress, today, due, onStart, onOpenCard }) {
-  const learned = Object.entries(progress.cards)
+  const learned = Object.entries(progress.cards).filter(([id]) => getCard(id))
   const upcoming = learned.filter(([, s]) => s.due > today).sort((a, b) => a[1].due.localeCompare(b[1].due))
 
   return (
@@ -28,12 +28,20 @@ export default function ReviewTab({ progress, today, due, onStart, onOpenCard })
         <p className="empty">Tout est à jour. Prochaine révision {upcoming[0] ? relativeDay(upcoming[0][1].due, today) : 'bientôt'}.</p>
       )}
 
+      {learned.length >= 4 && due.length === 0 && (
+        <section className="challenge-hero">
+          <h2 className="display">Défis</h2>
+          <p className="muted">Mélange tes cartes apprises : remets-les dans l’ordre chronologique, relie-les à leur description, trouve l’intrus.</p>
+          <button className="btn btn-ghost btn-block" onClick={onStart}>Lancer un défi</button>
+        </section>
+      )}
+
       {upcoming.length > 0 && (
         <section className="list-section">
           <h2 className="section-title">À venir</h2>
           <ul className="card-list">
             {upcoming.map(([id, s]) => (
-              <CardRow key={id} card={CARD_BY_ID[id]} sub={relativeDay(s.due, today)} badge={strength(s.box)}
+              <CardRow key={id} card={getCard(id)} sub={relativeDay(s.due, today)} badge={strength(s.box)}
                 onOpen={() => onOpenCard(id)} />
             ))}
           </ul>

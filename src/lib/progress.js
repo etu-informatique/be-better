@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addDays, todayKey } from './dates.js'
 import { reviewCard, scheduleNew } from './srs.js'
-import { LEVELS } from '../data/levels.js'
 
 const STORAGE_KEY = 'be-better:v2'
 
@@ -52,11 +51,30 @@ function bumpDay(days, today, field, n) {
 }
 
 // Les niveaux se débloquent dans l'ordre : le premier non validé est le niveau « en cours ».
-export function levelStates(progress) {
-  const current = LEVELS.findIndex((l) => !progress.completedLevels[l.id])
+export function levelStates(progress, levels) {
+  const current = levels.findIndex((l) => !progress.completedLevels[l.id])
   return Object.fromEntries(
-    LEVELS.map((l, i) => [l.id, progress.completedLevels[l.id] ? 'done' : i === current ? 'current' : 'locked']),
+    levels.map((l, i) => [l.id, progress.completedLevels[l.id] ? 'done' : i === current ? 'current' : 'locked']),
   )
+}
+
+// Numéro du niveau en cours (les niveaux sont validés dans l'ordre).
+export const currentLevelNumber = (progress) => Object.keys(progress.completedLevels).length + 1
+
+// Sauvegarde : la progression tient dans un petit fichier JSON qu'on peut réimporter
+// sur un autre appareil ou après avoir vidé le navigateur.
+const EXPORT_FORMAT = 'be-better-progression'
+
+export const exportProgress = (progress) =>
+  JSON.stringify({ format: EXPORT_FORMAT, version: 2, exportedAt: new Date().toISOString(), progress }, null, 1)
+
+export function parseImport(text) {
+  const data = JSON.parse(text)
+  const p = data?.progress
+  if (data?.format !== EXPORT_FORMAT || !p || typeof p.completedLevels !== 'object' || typeof p.cards !== 'object') {
+    throw new Error('Ce fichier n’est pas une sauvegarde Be Better.')
+  }
+  return { ...initialProgress(), ...p }
 }
 
 export function useProgress() {
@@ -113,6 +131,7 @@ export function useProgress() {
         }),
 
       reset: () => setProgress(initialProgress()),
+      replace: (progress) => setProgress(progress),
     }),
     [],
   )

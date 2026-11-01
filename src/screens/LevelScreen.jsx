@@ -1,4 +1,4 @@
-import { CARD_BY_ID, deckFor } from '../data/cards.js'
+import { getCard, getDeck } from '../data/content.js'
 import TopBar from '../components/TopBar.jsx'
 import ThemeLabel from '../components/ThemeLabel.jsx'
 import CardVisual from '../components/CardVisual.jsx'
@@ -22,7 +22,7 @@ function DeckCard({ card, onOpen }) {
 // Chaque niveau a son propre paquet de cartes ; une fois le niveau validé, seule la carte choisie reste.
 export default function LevelScreen({ level, progress, onOpenCard, onBack }) {
   const done = progress.completedLevels[level.id]
-  const cards = (done ? [done.cardId] : deckFor(level)).map((id) => CARD_BY_ID[id])
+  const cards = done ? [getCard(done.cardId)].filter(Boolean) : getDeck(level)
 
   return (
     <div className="screen screen-level">

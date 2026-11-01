@@ -141,6 +141,7 @@ export const HANDWRITTEN_CARDS = [
   },
   {
     id: 'origine-francais',
+    when: { from: 842 },
     theme: 'langues',
     title: 'D’où vient le français ?',
     teaser: 'Du latin des soldats romains à l’Académie française.',
@@ -217,6 +218,7 @@ export const HANDWRITTEN_CARDS = [
   },
   {
     id: 'mur-berlin',
+    when: { from: 1989 },
     theme: 'histoire',
     title: 'La chute du mur de Berlin',
     teaser: '9 novembre 1989 : la fin d’une Europe coupée en deux.',
@@ -426,6 +428,7 @@ export const HANDWRITTEN_CARDS = [
   },
   {
     id: 'anglais-francais',
+    when: { from: 1066 },
     theme: 'langues',
     title: 'Le français caché dans l’anglais',
     teaser: 'Pourquoi « beef » ressemble tant à « bœuf ».',
@@ -502,6 +505,7 @@ export const HANDWRITTEN_CARDS = [
   },
   {
     id: 'krach-1929',
+    when: { from: 1929 },
     theme: 'economie',
     title: 'Le krach de 1929',
     teaser: 'Le jeudi noir qui a plongé le monde dans la crise.',
@@ -559,6 +563,7 @@ export const HANDWRITTEN_CARDS = [
   },
   {
     id: 'lune-1969',
+    when: { from: 1969 },
     theme: 'histoire',
     title: 'Les premiers pas sur la Lune',
     teaser: 'Juillet 1969 : « un petit pas pour l’homme… »',

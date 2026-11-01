@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { CARD_BY_ID } from './data/cards.js'
-import { LEVEL_BY_ID } from './data/levels.js'
+import { ensureLevels, getCard, getLevels, isLevelLoaded, useContentVersion } from './data/content.js'
 import { todayKey } from './lib/dates.js'
-import { useProgress } from './lib/progress.js'
+import { currentLevelNumber, useProgress } from './lib/progress.js'
 import { dueCardIds } from './lib/srs.js'
 import TabBar from './components/TabBar.jsx'
 import Roadmap from './screens/Roadmap.jsx'
@@ -14,15 +13,41 @@ import ReviewSession from './screens/ReviewSession.jsx'
 import Library from './screens/Library.jsx'
 import Profile from './screens/Profile.jsx'
 
+function Splash({ error, onRetry }) {
+  return (
+    <div className="splash">
+      <span className="wordmark">Be Better</span>
+      {error ? (
+        <>
+          <p className="muted">Impossible de charger les cartes. Vérifie ta connexion.</p>
+          <button className="btn btn-primary" onClick={onRetry}>Réessayer</button>
+        </>
+      ) : (
+        <p className="muted">Chargement des cartes…</p>
+      )}
+    </div>
+  )
+}
+
 export default function App() {
   const [progress, actions] = useProgress()
+  useContentVersion()
   const [tab, setTab] = useState('path')
+  const [loadError, setLoadError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
   // Pile d'écrans au-dessus des onglets. Synchronisée avec l'historique du navigateur
   // pour que le bouton « retour » du téléphone fonctionne.
   const [stack, setStack] = useState([{ name: 'home' }])
   const route = stack[stack.length - 1]
   const today = todayKey()
-  const due = dueCardIds(progress.cards, today)
+  const current = currentLevelNumber(progress)
+  const levels = getLevels()
+
+  // On charge les niveaux jusqu'au suivant du niveau en cours : toutes les cartes apprises y sont.
+  useEffect(() => {
+    setLoadError(null)
+    ensureLevels(current + 1).catch((e) => setLoadError(e.message))
+  }, [current, attempt])
 
   useEffect(() => {
     history.replaceState({ depth: 0 }, '')
@@ -34,6 +59,11 @@ export default function App() {
   useEffect(() => {
     if (route.name !== 'home' || tab !== 'path') window.scrollTo(0, 0)
   }, [route, tab])
+
+  const ready = levels && isLevelLoaded(Math.min(current, levels.levels.length))
+  if (!ready) return <Splash error={loadError} onRetry={() => setAttempt((a) => a + 1)} />
+
+  const due = dueCardIds(progress.cards, today).filter(getCard)
 
   const push = (next) => {
     history.pushState({ depth: stack.length }, '')
@@ -49,7 +79,7 @@ export default function App() {
     case 'level':
       screen = (
         <LevelScreen
-          level={LEVEL_BY_ID[route.levelId]}
+          level={levels.byId[route.levelId]}
           progress={progress}
           onOpenCard={(cardId) => push({ name: 'card', cardId, mode: 'learn', levelId: route.levelId })}
           onBack={back}
@@ -60,7 +90,7 @@ export default function App() {
       screen = (
         <CardDetail
           key={route.cardId}
-          card={CARD_BY_ID[route.cardId]}
+          card={getCard(route.cardId)}
           mode={route.mode}
           progress={progress}
           onStartQuiz={() => {
@@ -75,18 +105,19 @@ export default function App() {
       break
     case 'quiz':
       screen = (
-        <LevelQuiz level={LEVEL_BY_ID[route.levelId]} card={CARD_BY_ID[route.cardId]} progress={progress}
+        <LevelQuiz level={levels.byId[route.levelId]} card={getCard(route.cardId)} progress={progress}
           actions={actions} onBack={back} onHome={home} />
       )
       break
     case 'review':
-      screen = <ReviewSession due={due} actions={actions} onBack={back} />
+      screen = <ReviewSession due={due} progress={progress} actions={actions} onBack={back} />
       break
     default:
       screen = (
         <>
           {tab === 'path' && (
             <Roadmap
+              levels={levels}
               progress={progress}
               today={today}
               dueCount={due.length}
@@ -98,7 +129,7 @@ export default function App() {
             <ReviewTab progress={progress} today={today} due={due} onStart={() => push({ name: 'review' })} onOpenCard={openCard} />
           )}
           {tab === 'library' && <Library progress={progress} onOpenCard={openCard} />}
-          {tab === 'me' && <Profile progress={progress} today={today} onReset={actions.reset} />}
+          {tab === 'me' && <Profile levels={levels} progress={progress} today={today} actions={actions} />}
           <TabBar tab={tab} onChange={setTab} dueCount={due.length} />
         </>
       )

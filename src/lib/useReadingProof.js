@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // Preuve de lecture, sans IA : chaque bloc de texte doit rester visible à l'écran pendant
 // un temps proportionnel à sa longueur (environ la moitié d'une lecture normale).
 // Faire défiler vite ne suffit donc pas ; le minuteur s'arrête si l'app passe en arrière-plan.
+// Un bloc écouté jusqu'au bout avec la lecture à voix haute compte aussi comme lu (`mark`).
 const MS_PER_WORD = 120
 const MIN_MS = 2000
 const MAX_MS = 15000
@@ -12,6 +13,7 @@ export const requiredMs = (text) => Math.min(MAX_MS, Math.max(MIN_MS, text.trim(
 
 export function useReadingProof(enabled) {
   const blocks = useRef([])
+  const done = useRef(new Set())
   const [read, setRead] = useState(() => new Set())
   const [count, setCount] = useState(0)
 
@@ -24,13 +26,18 @@ export function useReadingProof(enabled) {
     [],
   )
 
+  const mark = useCallback((index) => {
+    if (done.current.has(index)) return
+    done.current.add(index)
+    setRead(new Set(done.current))
+  }, [])
+
   useEffect(() => {
     if (!enabled || count === 0) return
     const els = blocks.current.slice(0, count)
     const needed = els.map((el) => requiredMs(el?.textContent ?? ''))
     const spent = els.map(() => 0)
     const visible = els.map(() => false)
-    const done = new Set()
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -49,23 +56,18 @@ export function useReadingProof(enabled) {
 
     const timer = setInterval(() => {
       if (document.visibilityState !== 'visible') return
-      let changed = false
       els.forEach((_, i) => {
-        if (!visible[i] || done.has(i)) return
+        if (!visible[i] || done.current.has(i)) return
         spent[i] += TICK
-        if (spent[i] >= needed[i]) {
-          done.add(i)
-          changed = true
-        }
+        if (spent[i] >= needed[i]) mark(i)
       })
-      if (changed) setRead(new Set(done))
     }, TICK)
 
     return () => {
       observer.disconnect()
       clearInterval(timer)
     }
-  }, [enabled, count])
+  }, [enabled, count, mark])
 
-  return { track, read, total: count, complete: count > 0 && read.size >= count }
+  return { track, mark, read, total: count, complete: count > 0 && read.size >= count }
 }

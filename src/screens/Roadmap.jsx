@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { CHAPTERS } from '../data/levels.js'
-import { CARD_BY_ID } from '../data/cards.js'
+import { getCard } from '../data/content.js'
 import { DAILY_GOAL, currentStreak, levelStates } from '../lib/progress.js'
 import { BoltIcon, BrainIcon, CheckIcon, FlameIcon, LockIcon } from '../components/Icons.jsx'
 
 // La roadmap se lit de bas en haut : le niveau 1 tout en bas, on monte au fil des niveaux.
-export default function Roadmap({ progress, today, dueCount, onOpenLevel, onOpenReview }) {
-  const states = levelStates(progress)
+export default function Roadmap({ levels, progress, today, dueCount, onOpenLevel, onOpenReview }) {
+  const states = levelStates(progress, levels.levels)
   const streak = currentStreak(progress.streak, today)
   const learnedToday = progress.days[today]?.cards ?? 0
   const currentRef = useRef(null)
@@ -38,7 +37,7 @@ export default function Roadmap({ progress, today, dueCount, onOpenLevel, onOpen
 
       <div className="road">
         <p className="road-end">D’autres niveaux arrivent…</p>
-        {[...CHAPTERS].reverse().map((chapter) => (
+        {[...levels.chapters].reverse().map((chapter) => (
           <section key={chapter.id} className="chapter">
             <ol className="path">
               {[...chapter.levels].reverse().map((level) => {
@@ -51,13 +50,13 @@ export default function Roadmap({ progress, today, dueCount, onOpenLevel, onOpen
                       className="node"
                       disabled={state === 'locked'}
                       onClick={() => onOpenLevel(level.id)}
-                      aria-label={`Niveau ${level.number}${state === 'done' ? `, validé : ${CARD_BY_ID[done.cardId]?.title}` : state === 'locked' ? ', verrouillé' : ', à faire'}`}
+                      aria-label={`Niveau ${level.number}${state === 'done' ? `, validé : ${getCard(done.cardId)?.title}` : state === 'locked' ? ', verrouillé' : ', à faire'}`}
                     >
                       {state === 'done' ? <CheckIcon size={22} /> : state === 'locked' ? <LockIcon size={18} /> : level.number}
                     </button>
                     <span className="stop-label">
                       <span className="stop-number">Niveau {level.number}</span>
-                      {state === 'done' && <span className="stop-title">{CARD_BY_ID[done.cardId]?.title}</span>}
+                      {state === 'done' && <span className="stop-title">{getCard(done.cardId)?.title}</span>}
                       {state === 'current' && <span className="stop-title">Choisis ta carte</span>}
                     </span>
                   </li>

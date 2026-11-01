@@ -2,25 +2,32 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Sur GitHub Pages, l'app est servie sous /be-better/ : le workflow de publication fixe BASE_PATH.
+const base = process.env.BASE_PATH ?? '/'
+
 export default defineConfig({
-  // Les cartes générées sont un gros JSON : on le garde en chaîne, plus rapide à charger qu'un objet JS
-  json: { stringify: true },
+  base,
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
       workbox: {
+        // Le contenu (public/content) n'est pas préchargé en entier : il est mis en cache
+        // au fur et à mesure, comme les images.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        // Les images des cartes viennent de Wikimedia Commons : gardées en cache pour le hors-ligne
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/content/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'contenu', expiration: { maxEntries: 100 } },
+          },
           {
             urlPattern: ({ url }) => url.hostname === 'upload.wikimedia.org',
             handler: 'CacheFirst',
             options: {
               cacheName: 'images-wikimedia',
-              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 90 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -36,6 +43,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         start_url: '.',
+        scope: '.',
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },

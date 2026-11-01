@@ -3,6 +3,9 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { sentences } from '../../src/lib/text.js'
+
+export { sentences }
 
 const here = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(here, '.cache')
@@ -100,8 +103,12 @@ export function cleanExtract(text) {
     .replace(/\[[^\]]*\]/g, '')
     // parenthèses en écriture non latine ou en alphabet phonétique (« en russe : Пушкин, /ˈpuʂkʲɪn/ »)
     .replace(/\s*\([^()]*[^\u0000-ɏ -⁯€ «»’ᵉʳ][^()]*\)/gu, '')
-    // prononciations entre barres obliques : « (/futbol/) »
+    // prononciations entre barres obliques : « (/futbol/) », « prononcé : /ɦijeː…/, »
     .replace(/\s*\(\s*\/[^)]*\/\s*\)/g, '')
+    .replace(/(?:prononcé\s*:?\s*)?\/[^/\n]*[ɐ-˿̀-ͯ][^/\n]*\/[,;]?\s*/gu, '')
+    // restes de prononciation vidés par Wikipédia : « (prononcé en allemand ) », « X, prononcé en français, est… »
+    .replace(/,\s*prononcé(?:\s+en\s+[^\s,;)]+)?\s*:?\s*,\s*/giu, ' ')
+    .replace(/\(\s*(?:prononcé(?:\s+en\s+[^\s,;)]+)?\s*:?\s*(?:[;,]\s*)?)+/giu, '(')
     // mots isolés en caractères chinois, japonais ou coréens
     .replace(/\s*[　-ヿ㐀-鿿가-힯豈-﫿]+/gu, '')
     .replace(/\(\s*(?:[,;:–-]\s*)*\)/g, '')
@@ -112,17 +119,6 @@ export function cleanExtract(text) {
     .trim()
 }
 
-// Découpe en phrases (suffisant pour du texte encyclopédique français), sans couper après
-// une abréviation comme « av. J.-C. » ou « M. ».
-const ABBREVIATION = /(?:\b(?:av|apr|J\.-C|env|cf|M|Mme|Mgr|Dr|St|Ste|vol|p|n°|art|ca|etc)|\b[A-Z])\.$/u
-export function sentences(text) {
-  const out = []
-  for (const piece of text.split(/(?<=[.!?…])\s+(?=[A-ZÀ-ÖØ-Þ«“"(])/u)) {
-    if (out.length && ABBREVIATION.test(out[out.length - 1])) out[out.length - 1] += ' ' + piece
-    else out.push(piece)
-  }
-  return out
-}
 
 // Garde les premiers paragraphes, dans une limite de longueur, en coupant entre deux phrases.
 export function shortSummary(extract, maxChars = 700) {

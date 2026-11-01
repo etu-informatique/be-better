@@ -36,6 +36,12 @@ export const FlameIcon = (p) => (
   <Svg {...p}><path d="M12 22c4 0 7-2.7 7-6.8 0-3.6-2.5-6-4.2-8.2-.4 2-1.5 3.2-2.8 3.7C12.6 7.5 11 4.5 8.5 2.5 8.7 6 5 8.7 5 14.7 5 19.2 8 22 12 22Z" /></Svg>
 )
 export const BoltIcon = (p) => <Svg {...p}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" /></Svg>
+export const SpeakerIcon = (p) => (
+  <Svg {...p}><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></Svg>
+)
+export const StopIcon = (p) => <Svg {...p}><rect x="6" y="6" width="12" height="12" rx="1.5" /></Svg>
+export const DownloadIcon = (p) => <Svg {...p}><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></Svg>
+export const UploadIcon = (p) => <Svg {...p}><path d="M12 20V9M7 14l5-5 5 5M5 4h14" /></Svg>
 export const ExternalIcon = (p) => (
   <Svg {...p}><path d="M14 4h6v6M20 4l-9 9" /><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></Svg>
 )

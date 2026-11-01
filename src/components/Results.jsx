@@ -1,4 +1,4 @@
-import { CARD_BY_ID } from '../data/cards.js'
+import { getCard } from '../data/content.js'
 import { CheckIcon, CloseIcon } from './Icons.jsx'
 
 export default function Results({ eyebrow, title, message, results, xp, showCards = true, children }) {
@@ -18,7 +18,7 @@ export default function Results({ eyebrow, title, message, results, xp, showCard
           {results.map((r, i) => (
             <li key={i} className={r.correct ? 'good' : 'bad'}>
               {r.correct ? <CheckIcon size={18} /> : <CloseIcon size={18} />}
-              <span>{CARD_BY_ID[r.cardId].title}</span>
+              <span>{r.label ?? getCard(r.cardId)?.title}</span>
             </li>
           ))}
         </ul>
