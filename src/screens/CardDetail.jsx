@@ -5,7 +5,7 @@ import { useReadingProof } from '../lib/useReadingProof.js'
 import TopBar from '../components/TopBar.jsx'
 import ThemeLabel from '../components/ThemeLabel.jsx'
 import CardVisual from '../components/CardVisual.jsx'
-import { ExternalIcon, StarIcon } from '../components/Icons.jsx'
+import { CheckIcon, ExternalIcon, StarIcon } from '../components/Icons.jsx'
 
 // mode « learn » : lecture dans un niveau, avec preuve de lecture avant le quiz ;
 // « browse » : consultation libre depuis la bibliothèque ou les révisions.
@@ -21,7 +21,9 @@ export default function CardDetail({ card, mode, progress, onStartQuiz, onBack, 
   if (card.why) blocks.push({ kind: 'why', text: card.why })
   const related = (card.related ?? []).filter((id) => progress.cards[id] || progress.readCards[id])
 
-  const blockClass = (i) => (learning ? `tracked ${unlocked || read.has(i) ? 'is-read' : ''}` : '')
+  const isRead = (i) => learning && (unlocked || read.has(i))
+  const blockClass = (i) => (isRead(i) ? 'is-read' : '')
+  const readMark = (i) => isRead(i) && <CheckIcon size={14} className="read-mark" />
 
   return (
     <div className="screen screen-card">
@@ -59,12 +61,25 @@ export default function CardDetail({ card, mode, progress, onStartQuiz, onBack, 
             <p key={i} ref={track(i)} className={`card-text ${blockClass(i)}`}>{frTypo(b.text)}</p>
           ) : b.kind === 'facts' ? (
             <section key={i} ref={track(i)} className={`facts ${blockClass(i)}`}>
-              <h2>À retenir</h2>
-              <ul>{b.items.map((f) => <li key={f}>{frTypo(f)}</li>)}</ul>
+              <h2 className="block-title">À retenir {readMark(i)}</h2>
+              <dl>
+                {b.items.map((fact, n) => {
+                  // « 14 juillet 1789 : prise de la Bastille » → étiquette + contenu
+                  const at = fact.indexOf(' : ')
+                  const label = at > 0 ? fact.slice(0, at) : String(n + 1).padStart(2, '0')
+                  const value = at > 0 ? fact.slice(at + 3) : fact
+                  return (
+                    <div key={fact} className="fact">
+                      <dt>{label}</dt>
+                      <dd>{frTypo(value.charAt(0).toUpperCase() + value.slice(1))}</dd>
+                    </div>
+                  )
+                })}
+              </dl>
             </section>
           ) : (
             <section key={i} ref={track(i)} className={`why ${blockClass(i)}`}>
-              <h2>Pourquoi c’est important</h2>
+              <h2 className="block-title">Pourquoi c’est important {readMark(i)}</h2>
               <p>{frTypo(b.text)}</p>
             </section>
           ),
@@ -72,7 +87,7 @@ export default function CardDetail({ card, mode, progress, onStartQuiz, onBack, 
 
         {related.length > 0 && (
           <section className="related">
-            <h2>Voir aussi</h2>
+            <h2 className="block-title">Voir aussi</h2>
             <div className="related-list">
               {related.map((id) => (
                 <button key={id} className="related-chip" onClick={() => onOpenCard(id)}>{CARD_BY_ID[id].title}</button>

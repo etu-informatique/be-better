@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addDays, todayKey } from './dates.js'
 import { reviewCard, scheduleNew } from './srs.js'
-import { CARDS } from '../data/cards.js'
 import { LEVELS } from '../data/levels.js'
 
 const STORAGE_KEY = 'be-better:v2'
@@ -58,22 +57,6 @@ export function levelStates(progress) {
   return Object.fromEntries(
     LEVELS.map((l, i) => [l.id, progress.completedLevels[l.id] ? 'done' : i === current ? 'current' : 'locked']),
   )
-}
-
-// Cartes proposées pour un niveau : sans filtre, la prochaine carte de chaque thème ;
-// avec un thème choisi, les prochaines cartes de ce thème.
-export function suggestions(progress, themeId, max = 12) {
-  const fresh = CARDS.filter((c) => !progress.cards[c.id])
-  if (themeId) return fresh.filter((c) => c.theme === themeId).slice(0, max)
-  const seen = new Set()
-  const out = []
-  for (const c of fresh) {
-    if (seen.has(c.theme)) continue
-    seen.add(c.theme)
-    out.push(c)
-    if (out.length >= max) break
-  }
-  return out
 }
 
 export function useProgress() {

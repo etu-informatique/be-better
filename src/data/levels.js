@@ -1,6 +1,7 @@
 // La roadmap : une suite de niveaux regroupés en chapitres de 10.
-// À chaque niveau, on choisit librement une carte parmi celles qu'on n'a pas encore apprises.
+// Chaque niveau propose son propre paquet de cartes (voir deckFor) ; on en choisit une.
 export const LEVEL_COUNT = 200
+export const DECK_SIZE = 5
 const LEVELS_PER_CHAPTER = 10
 
 const CHAPTER_TITLES = [

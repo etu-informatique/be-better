@@ -2,7 +2,8 @@
 // Usage : npm run check-content
 import { readFileSync } from 'node:fs'
 import { HANDWRITTEN_CARDS } from '../src/data/handwritten.js'
-import { LEVEL_COUNT } from '../src/data/levels.js'
+import { DECK_SIZE, LEVEL_COUNT } from '../src/data/levels.js'
+import { buildDecks } from '../src/lib/decks.js'
 import { THEMES } from '../src/data/themes.js'
 
 const wiki = JSON.parse(readFileSync(new URL('../src/data/generated/wiki.json', import.meta.url), 'utf8'))
@@ -29,7 +30,16 @@ for (const card of CARDS) {
   })
 }
 
-if (CARDS.length < LEVEL_COUNT) errors.push(`${CARDS.length} cartes pour ${LEVEL_COUNT} niveaux : il en faut au moins autant`)
+// Paquets des niveaux : complets, sans carte répétée d'un niveau à l'autre
+const decks = buildDecks(CARDS, LEVEL_COUNT, DECK_SIZE)
+const byId = Object.fromEntries(CARDS.map((c) => [c.id, c]))
+if (decks.length < LEVEL_COUNT) errors.push(`${decks.length} paquets pour ${LEVEL_COUNT} niveaux`)
+decks.forEach((deck, i) => {
+  if (deck.length < DECK_SIZE) errors.push(`niveau ${i + 1} : ${deck.length} carte(s) au lieu de ${DECK_SIZE}`)
+})
+const dealt = decks.flat()
+if (new Set(dealt).size !== dealt.length) errors.push('une carte apparaît dans plusieurs niveaux')
+const mixedDecks = decks.filter((d) => new Set(d.map((id) => byId[id].theme)).size === d.length).length
 
 if (errors.length) {
   console.error(`✗ ${errors.length} problème(s) :\n- ${errors.join('\n- ')}`)
@@ -37,3 +47,4 @@ if (errors.length) {
 }
 const withImage = CARDS.filter((c) => c.image || wiki.images[c.id]).length
 console.log(`✓ Contenu valide : ${CARDS.length} cartes (${withImage} avec image), ${LEVEL_COUNT} niveaux, ${Object.keys(THEMES).length} thèmes.`)
+console.log(`  ${decks.length} paquets de ${DECK_SIZE} cartes, ${mixedDecks} avec ${DECK_SIZE} thèmes différents ; ${CARDS.length - dealt.length} carte(s) non distribuée(s).`)
